@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:mock="http://www.mulesoft.org/schema/mule/mock" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mock http://www.mulesoft.org/schema/mule/mock/current/mule-mock.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <munit:config name="munit" doc:name="MUnit configuration"/>
+    <spring:beans>
+        <spring:import resource="classpath:atg_cust_impl.xml"/>
+    </spring:beans>
+    <munit:test name="atg_cust_impl-test-suite-get_atg_custFlowTest" description="Test">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name" whereValue="#['get by city data']"/>
+			</mock:with-attributes>
+        </mock:when>
+        <flow-ref name="get_atg_custFlow" doc:name="Flow-ref to get_atg_custFlow"/>
+		<munit:assert-payload-equals expectedValue="#['']" doc:name="Assert Payload"/>
+		<set-variable variableName="String" value="#[[{&quot;cust_gender&quot;:&quot;M&quot;,&quot;cust_first_name&quot;:&quot;Yousuf1&quot;,&quot;cust_year_of_birth&quot;:&quot;1993-01-01T00:00:00&quot;,&quot;cust_street_address&quot;:&quot;Tolichowki&quot;,&quot;cust_marital_status&quot;:&quot;Unmarrid&quot;,&quot;cust_last_name&quot;:&quot;khan1&quot;,&quot;cust_comment&quot;:&quot;xyz&quot;,&quot;cust_postal_code&quot;:&quot;500032&quot;,&quot;cust_city&quot;:&quot;Hyderabad&quot;}]]" mimeType="application/json" doc:name="Variable"/>
+		<munit:assert-null message="#[payload]" doc:name="Assert Null Payload"/>
+    </munit:test>
+    <munit:test name="atg_cust_impl-test-suite-post_atg_custFlowTest" description="Test">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name" whereValue="#['POST_DATA_INTO_Database']"/>
+			</mock:with-attributes>
+			<mock:then-return payload="#[]"/>
+        </mock:when>
+		<munit:assert-payload-equals expectedValue="#['']" doc:name="Assert Payload"/>
+		<dw:transform-message doc:name="Transform Message">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+  
+  "CUST_FIRST_NAME": "Yousuf1",
+  "CUST_LAST_NAME": "khan1",
+  "CUST_GENDER": "M",
+  "CUST_YEAR_OF_BIRTH": 1993,
+  "CUST_MARITAL_STATUS": "single",
+  "CUST_STREET_ADDRESS": "Tolichowki",
+  "CUST_POST_CODE": "500032",
+  "CUST_CITY":"Hyd" ,
+  "CUST_COMMENT": "xyz"
+	
+}]]></dw:set-payload>
+		</dw:transform-message>
+        <flow-ref name="post_atg_custFlow" doc:name="Flow-ref to post_atg_custFlow"/>
+		<munit:assert-not-null doc:name="Assert Not Null Payload"/>
+    </munit:test>
+    <munit:test name="atg_cust_impl-test-suite-delete_atg_cust_implFlowTest" description="Test">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name" whereValue="#['Database']"/>
+			</mock:with-attributes>
+        </mock:when>
+        <flow-ref name="delete_atg_cust_implFlow" doc:name="Flow-ref to delete_atg_cust_implFlow"/>
+		<munit:assert-null doc:name="Assert Null Payload"/>
+    </munit:test>
+    <munit:test name="atg_cust_impl-test-suite-put_atg_custFlowTest" description="Test">
+		<mock:when messageProcessor=".*:.*" doc:name="Mock">
+			<mock:with-attributes>
+				<mock:with-attribute name="doc:name" whereValue="#['Update data into database']"/>
+			</mock:with-attributes>
+		</mock:when>
+		<munit:assert-payload-equals expectedValue="#['']" doc:name="Assert Payload"/>
+		<dw:transform-message doc:name="Transform Message">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+  "CUST_FIRST_NAME": "Yousuf1",
+  "CUST_LAST_NAME": "khan1",
+  "CUST_GENDER": "M",
+  "CUST_YEAR_OF_BIRTH": 1993,
+  "CUST_MARITAL_STATUS": "single",
+  "CUST_STREET_ADDRESS": "Tolichowki",
+  "CUST_POST_CODE": "500032",
+  "CUST_CITY":"Hyd" ,
+  "CUST_COMMENT": "xyz"
+	
+}]]></dw:set-payload>
+		</dw:transform-message>
+        <flow-ref name="put_atg_custFlow" doc:name="Flow-ref to put_atg_custFlow"/>
+		<munit:assert-null doc:name="Assert Null Payload"/>
+    </munit:test>
+</mule>

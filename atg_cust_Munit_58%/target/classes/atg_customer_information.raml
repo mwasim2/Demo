@@ -1,0 +1,82 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/2fa3e63f-9aaa-405e-b643-06c08015f386/ # 
+title: ATG_Customer_Information
+description: ATG Employee Details Specification 
+types:
+  DataType: !include Customer/DataType/CUST_DATATYPE.raml
+traits:
+  Error: !include Customer/Trait/error.raml
+  client-id-required: !include Customer/Trait/client_id_enforcement_trait.raml
+    
+/ATG:
+  is: [client-id-required,Error]
+  description: We haveing one Resoruce i.e- ATG
+  get:
+    queryParameters:
+      city?:
+        type: string
+        enum:
+          - HYD
+          - BLR
+          - KOL
+    responses:
+      200:
+        body:
+          application/json:
+            example: !include Customer/Example/CUST_EXAMPLES.raml
+    
+  post:
+    body:
+      application/json:
+        type: DataType
+        example: !include Customer/Example/CUST_EXAMPLE_WITHOUT_ID.raml
+    responses:
+      201:
+        body:
+          application/json:
+            example: !include Customer/Example/CUST_EXAMPLE.raml
+    
+  /{getByID}:
+    is: [client-id-required,Error]
+    get:
+        queryParameters:
+          CUST_ID?:
+            type: number
+        responses:
+          200:
+            body:
+              application/json:
+                type: DataType
+                example: !include Customer/Example/CUST_EXAMPLE.raml
+        
+    put:
+      body:
+        application/json:
+          type: DataType
+          example: !include Customer/Example/CUST_EXAMPLE_WITHOUT_ID.raml
+      responses:
+        200:
+          body:
+            application/json:
+              example: 
+                message: Data Updated but really!
+      
+    delete:
+      responses:
+        200:
+          body:
+            application/json:
+              type: DataType
+              example:
+                Message: Data Deleted really!
+          
+                
+          
+              
+                
+              
+
+        
+              
+        
+              

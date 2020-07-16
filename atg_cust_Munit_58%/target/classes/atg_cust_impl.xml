@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+	<http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8085" doc:name="HTTP Listener Configuration"/>
+	<db:mysql-config name="MySQL_Configuration" host="biwofjabx2kf74wpxwby-mysql.services.clever-cloud.com" port="3306" user="u3ajyo090orr1vmz" password="RYwwM9bWHR67OW6eItpR" database="biwofjabx2kf74wpxwby" doc:name="MySQL Configuration"/>
+	<flow name="get_atg_custFlow">
+		<set-variable variableName="getcity" value="#[message.inboundProperties.'http.query.params'.getcity]" doc:name="get city variable"/>
+		<choice doc:name="Choice">
+			<when expression="#[flowVars.getcity !=null]">
+				<db:select config-ref="MySQL_Configuration" doc:name="get by city data">
+					<db:parameterized-query><![CDATA[select *from Customer where cust_city= #[message.inboundProperties.'http.query.params'.getcity]]]></db:parameterized-query>
+				</db:select>
+			</when>
+			<otherwise>
+				<db:select config-ref="MySQL_Configuration" doc:name="Select all data">
+					<db:parameterized-query><![CDATA[select *from Customer]]></db:parameterized-query>
+				</db:select>
+			</otherwise>
+		</choice>
+		<json:object-to-json-transformer doc:name="Data transafer from object to json"/>
+	</flow>
+	<flow name="post_atg_custFlow">
+		<dw:transform-message doc:name="Transform Message">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload]]></dw:set-payload>
+		</dw:transform-message>
+		<dw:transform-message doc:name="Data Processed">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-payload>
+		</dw:transform-message>
+		<foreach doc:name="For Each">
+			<db:insert config-ref="MySQL_Configuration" doc:name="POST_DATA_INTO_Database">
+				<db:parameterized-query><![CDATA[INSERT INTO Customer values (#[payload.cust_id], #[payload.cust_first_name], #[payload.cust_last_name], #[payload.cust_gender], #[payload.cust_year_of_birth], #[payload.cust_marital_status], #[payload.cust_street_address], #[payload.cust_postal_code], #[payload.cust_city], #[payload.cust_comment])]]></db:parameterized-query>
+			</db:insert>
+		</foreach>
+		<set-payload value="Data Inserted!" doc:name="Message Data Inserted"/>
+	</flow>
+	<flow name="put_atg_custFlow">
+		<json:json-to-object-transformer doc:name="JSON to Object"/>
+		<dw:transform-message doc:name="Data Processed">
+			<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+}]]></dw:set-payload>
+		</dw:transform-message>
+		<db:update config-ref="MySQL_Configuration" doc:name="Update data into database">
+			<db:dynamic-query><![CDATA[UPDATE Customer SET cust_id=:cust_id, cust_first_name=json:cust_first_name, cust_last_name=:cust_last_name, cust_gender=:cust_gender, cust_year_of_birth=:cust_year_of_birth, cust_marital_status=:cust_marital_status, cust_street_address=:cust_street_address, cust_postal_code=:cust_postal_code,cust_city=json:cust_city, cust_comment=:cust_comment where cust_id=:cust_id]]></db:dynamic-query>
+		</db:update>
+		<set-payload doc:name="Complete Message Print" value="Data Updated!"/>
+	</flow>
+	<flow name="delete_atg_cust_implFlow">
+		<db:delete config-ref="MySQL_Configuration" doc:name="Database">
+			<db:parameterized-query><![CDATA[delete from Customer where cust_id= #[message.inboundProperties.'http.uri.params'.id]]]></db:parameterized-query>
+		</db:delete>
+		<set-payload value="Data Deleted" doc:name="Set Payload"/>
+	</flow>
+</mule>

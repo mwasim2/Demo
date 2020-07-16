@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:cluster="http://www.mulesoft.org/schema/mule/ee/cluster" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+	<configuration defaultExceptionStrategy-ref="global_errorChoice_Exception_Strategy" doc:name="Configuration">
+		<http:config useTransportForUris="false"/>
+	</configuration>
+	<choice-exception-strategy name="global_errorChoice_Exception_Strategy">
+		<catch-exception-strategy when="#[exception.causeBy(org.mule.api.MessagingException)]" doc:name="DB: QUERY_EXECUTION">
+			<set-property propertyName="http.status" value="500" doc:name="Property"/>
+			<dw:transform-message doc:name="Transform Message">
+				<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"result": "error",
+	"error": error.errorType,
+	"message":error.description
+}]]></dw:set-payload>
+			</dw:transform-message>
+			<logger message="BAD REQUEST" level="ERROR" doc:name="error.description"/>
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causeBy(java.new.UnkownHostException)]" doc:name="DB:CONNECTIVITY">
+			<set-property propertyName="http.status" value="500" doc:name="Property"/>
+			<dw:transform-message doc:name="Transform Message">
+				<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"result": "error",
+	"error": error.errorType,
+	"message":error.description
+}]]></dw:set-payload>
+			</dw:transform-message>
+			<logger message="Sserver Issue" level="ERROR" doc:name="error.description"/>
+		</catch-exception-strategy>
+		<catch-exception-strategy when="#[exception.causeBy(org.mule.api.transport.DispatchException)]" doc:name="Catch Exception Strategy">
+			<set-property propertyName="http.status" value="500" doc:name="Property"/>
+			<dw:transform-message doc:name="Transform Message">
+				<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"result": "error",
+	"error": error.errorType,
+	"message":error.description
+}]]></dw:set-payload>
+			</dw:transform-message>
+			<logger level="INFO" doc:name="error.description"/>
+		</catch-exception-strategy>
+		<catch-exception-strategy doc:name="Catch Exception Strategy">
+			<set-property propertyName="http.status" value="400" doc:name="Property"/>
+			<dw:transform-message doc:name="Transform Message">
+				<dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	"result": "error",
+	"error": error.errorType,
+	"message":error.description
+}]]></dw:set-payload>
+			</dw:transform-message>
+			<logger message="Error" level="ERROR" doc:name="error.description"/>
+		</catch-exception-strategy>
+	</choice-exception-strategy>
+</mule>
