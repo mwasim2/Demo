@@ -1,0 +1,9 @@
+host: bgqxdk6j3tz8uizobnys-mysql.services.clever-cloud.com
+database: bgqxdk6j3tz8uizobnys
+user: u5sitij2xfauobka
+password: f6QwkxxkzrU4PFhl0ne0
+
+port: 3306
+
+table: employee
+
